@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { ButtonContainer, ButtonContainerProps } from "./Button.styles"
 
-export function App() {
-  const [count, setCount] = useState(0)
+type Optional<T, K extends keyof T> = Pick<Partial<T>, K>
+
+export type ButtonProps = Optional<ButtonContainerProps, "variant">
+
+export function App({ variant = "primary" }: ButtonProps) {
 
   return (
-    <h1>Hello, world</h1>
+    <>
+      <ButtonContainer variant={variant}>Send</ButtonContainer>
+      <ButtonContainer variant="danger">Send</ButtonContainer>
+      <ButtonContainer variant="secondary">Send</ButtonContainer>
+      <ButtonContainer variant="success">Send</ButtonContainer>
+    </>
   )
 }
