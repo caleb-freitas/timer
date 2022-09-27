@@ -1,16 +1,39 @@
 import { Play } from 'phosphor-react'
+import { useForm } from 'react-hook-form'
+import { z } from 'zod'
+import { zodResolver } from '@hookform/resolvers/zod'
 import styled from 'styled-components'
 
+const createTaskSchema = z.object({
+  task: z.string().min(3),
+  minutes: z.number().min(5).max(60),
+})
+
+type CreateTaskSchema = z.infer<typeof createTaskSchema>
+
 export function Home() {
+  const { register, reset, handleSubmit, watch } = useForm<CreateTaskSchema>({
+    resolver: zodResolver(createTaskSchema),
+    defaultValues: {
+      task: '',
+      minutes: 0,
+    },
+  })
+  function handleCreateNewTask() {
+    reset()
+  }
+  const task = watch('task')
+  const formWasNotFilled = !task
   return (
     <HomeContainer>
-      <form action="">
+      <form onSubmit={handleSubmit(handleCreateNewTask)} action="">
         <InputContainer>
           <label htmlFor="">I&apos;m going to work on...</label>
           <TaskInput
             id="task"
             list="task-suggestions"
             placeholder="add your task name"
+            {...register('task')}
           />
           <datalist id="task-suggestions">
             <option value="Project 1"></option>
@@ -24,6 +47,7 @@ export function Home() {
             step={5}
             min={5}
             max={60}
+            {...register('minutes', { valueAsNumber: true })}
           />
           <span>minutes</span>
         </InputContainer>
@@ -34,7 +58,7 @@ export function Home() {
           <span>0</span>
           <span>0</span>
         </CountdownContainer>
-        <StartCountDownButton type="submit">
+        <StartCountDownButton disabled={formWasNotFilled} type="submit">
           <Play size={24} />
           Start
         </StartCountDownButton>
