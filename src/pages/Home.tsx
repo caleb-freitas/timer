@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import styled from 'styled-components'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { differenceInSeconds } from 'date-fns'
 
 const createCycleInput = z.object({
   task: z.string().min(3),
@@ -12,29 +13,52 @@ const createCycleInput = z.object({
 
 type CreateCycleInput = z.infer<typeof createCycleInput>
 
-type Cycle = CreateCycleInput & { id: string }
+type Cycle = CreateCycleInput & {
+  id: string
+  startDate: Date
+}
 
 export function Home() {
   const [cycles, setCycles] = useState<Cycle[]>([])
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const [secondsPassed, setSecondsPassed] = useState(0)
   const { register, reset, handleSubmit, watch } = useForm<CreateCycleInput>({
     resolver: zodResolver(createCycleInput),
     defaultValues: {
       task: '',
-      minutes: 0,
+      minutes: 25,
     },
   })
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+  useEffect(() => {
+    let interval: number
+    if (activeCycle) {
+      interval = setInterval(() => {
+        setSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
+      }, 1000)
+    }
+    return () => {
+      clearInterval(interval)
+    }
+  }, [activeCycle])
   function handleCreateNewCycle(cycleInput: CreateCycleInput) {
     const id = String(new Date().getTime())
     const newCycle: Cycle = {
       id,
+      startDate: new Date(),
       ...cycleInput,
     }
     setCycles((state) => [...state, newCycle])
     setActiveCycleId(id)
+    setSecondsPassed(0)
     reset()
   }
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+  const seconds = activeCycle ? activeCycle.minutes * 60 : 0
+  const currentSeconds = activeCycle ? seconds - secondsPassed : 0
+  const minutesAmount = Math.floor(currentSeconds / 60)
+  const secondsAmount = currentSeconds % 60
+  const minutesFormatted = String(minutesAmount).padStart(2, '0')
+  const secondsFormatted = String(secondsAmount).padStart(2, '0')
   const task = watch('task')
   const formWasNotFilled = !task
   return (
@@ -56,8 +80,6 @@ export function Home() {
           <MinutesInput
             id="minutes"
             type="number"
-            placeholder="00"
-            step={5}
             min={5}
             max={60}
             {...register('minutes', { valueAsNumber: true })}
@@ -65,11 +87,11 @@ export function Home() {
           <span>minutes</span>
         </InputContainer>
         <CountdownContainer>
-          <span>0</span>
-          <span>0</span>
+          <span>{minutesFormatted[0]}</span>
+          <span>{minutesFormatted[1]}</span>
           <Separator>:</Separator>
-          <span>0</span>
-          <span>0</span>
+          <span>{secondsFormatted[0]}</span>
+          <span>{secondsFormatted[1]}</span>
         </CountdownContainer>
         <StartCountDownButton disabled={formWasNotFilled} type="submit">
           <Play size={24} />
