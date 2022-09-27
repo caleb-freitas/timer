@@ -3,30 +3,43 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import styled from 'styled-components'
+import { useState } from 'react'
 
-const createTaskSchema = z.object({
+const createCycleInput = z.object({
   task: z.string().min(3),
   minutes: z.number().min(5).max(60),
 })
 
-type CreateTaskSchema = z.infer<typeof createTaskSchema>
+type CreateCycleInput = z.infer<typeof createCycleInput>
+
+type Cycle = CreateCycleInput & { id: string }
 
 export function Home() {
-  const { register, reset, handleSubmit, watch } = useForm<CreateTaskSchema>({
-    resolver: zodResolver(createTaskSchema),
+  const [cycles, setCycles] = useState<Cycle[]>([])
+  const [activeCycleId, setActiveCycleId] = useState<string | null>(null)
+  const { register, reset, handleSubmit, watch } = useForm<CreateCycleInput>({
+    resolver: zodResolver(createCycleInput),
     defaultValues: {
       task: '',
       minutes: 0,
     },
   })
-  function handleCreateNewTask() {
+  function handleCreateNewCycle(cycleInput: CreateCycleInput) {
+    const id = String(new Date().getTime())
+    const newCycle: Cycle = {
+      id,
+      ...cycleInput,
+    }
+    setCycles((state) => [...state, newCycle])
+    setActiveCycleId(id)
     reset()
   }
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
   const task = watch('task')
   const formWasNotFilled = !task
   return (
     <HomeContainer>
-      <form onSubmit={handleSubmit(handleCreateNewTask)} action="">
+      <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
         <InputContainer>
           <label htmlFor="">I&apos;m going to work on...</label>
           <TaskInput
