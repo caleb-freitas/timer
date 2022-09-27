@@ -1,4 +1,4 @@
-import { Play } from 'phosphor-react'
+import { HandPalm, Play } from 'phosphor-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -16,6 +16,8 @@ type CreateCycleInput = z.infer<typeof createCycleInput>
 type Cycle = CreateCycleInput & {
   id: string
   startDate: Date
+  stopDate?: Date
+  finishedDate?: Date
 }
 
 export function Home() {
@@ -30,18 +32,39 @@ export function Home() {
     },
   })
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+  const seconds = activeCycle ? activeCycle.minutes * 60 : 0
   useEffect(() => {
     let interval: number
     if (activeCycle) {
       interval = setInterval(() => {
-        setSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate))
+        const secondsDifference = differenceInSeconds(
+          new Date(),
+          activeCycle.startDate,
+        )
+        if (secondsDifference >= seconds) {
+          setCycles((state) =>
+            state.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return {
+                  ...cycle,
+                  finishedDate: new Date(),
+                }
+              }
+              return cycle
+            }),
+          )
+          setSecondsPassed(seconds)
+          clearInterval(interval)
+        } else {
+          setSecondsPassed(secondsDifference)
+        }
       }, 1000)
     }
     return () => {
       clearInterval(interval)
     }
-  }, [activeCycle])
-  function handleCreateNewCycle(cycleInput: CreateCycleInput) {
+  }, [activeCycle, seconds, activeCycleId])
+  function handleStartCycle(cycleInput: CreateCycleInput) {
     const id = String(new Date().getTime())
     const newCycle: Cycle = {
       id,
@@ -53,7 +76,20 @@ export function Home() {
     setSecondsPassed(0)
     reset()
   }
-  const seconds = activeCycle ? activeCycle.minutes * 60 : 0
+  function handleStopCycle() {
+    setCycles((state) =>
+      state.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return {
+            ...cycle,
+            stopDate: new Date(),
+          }
+        }
+        return cycle
+      }),
+    )
+    setActiveCycleId(null)
+  }
   const currentSeconds = activeCycle ? seconds - secondsPassed : 0
   const minutesAmount = Math.floor(currentSeconds / 60)
   const secondsAmount = currentSeconds % 60
@@ -63,13 +99,14 @@ export function Home() {
   const formWasNotFilled = !task
   return (
     <HomeContainer>
-      <form onSubmit={handleSubmit(handleCreateNewCycle)} action="">
+      <form onSubmit={handleSubmit(handleStartCycle)} action="">
         <InputContainer>
           <label htmlFor="">I&apos;m going to work on...</label>
           <TaskInput
             id="task"
             list="task-suggestions"
             placeholder="add your task name"
+            disabled={!!activeCycle}
             {...register('task')}
           />
           <datalist id="task-suggestions">
@@ -82,6 +119,7 @@ export function Home() {
             type="number"
             min={5}
             max={60}
+            disabled={!!activeCycle}
             {...register('minutes', { valueAsNumber: true })}
           />
           <span>minutes</span>
@@ -93,10 +131,17 @@ export function Home() {
           <span>{secondsFormatted[0]}</span>
           <span>{secondsFormatted[1]}</span>
         </CountdownContainer>
-        <StartCountDownButton disabled={formWasNotFilled} type="submit">
-          <Play size={24} />
-          Start
-        </StartCountDownButton>
+        {activeCycle ? (
+          <StopCountDownButton onClick={handleStopCycle} type="button">
+            <HandPalm size={24} />
+            Stop
+          </StopCountDownButton>
+        ) : (
+          <StartCountdownButton disabled={formWasNotFilled} type="submit">
+            <Play size={24} />
+            Start
+          </StartCountdownButton>
+        )}
       </form>
     </HomeContainer>
   )
@@ -184,7 +229,7 @@ const Separator = styled.div`
   justify-content: center;
 `
 
-const StartCountDownButton = styled.button`
+const BaseCountDownButton = styled.button`
   width: 100%;
   border: 0;
   padding: 1rem;
@@ -195,15 +240,26 @@ const StartCountDownButton = styled.button`
   gap: 0.5rem;
   font-weight: bold;
   cursor: pointer;
-  background: ${(props) => props.theme['green-500']};
   color: ${(props) => props.theme['gray-100']};
 
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
   }
+`
+
+const StartCountdownButton = styled(BaseCountDownButton)`
+  background: ${(props) => props.theme['green-500']};
 
   &:not(:disabled):hover {
     background: ${(props) => props.theme['green-700']};
+  }
+`
+
+const StopCountDownButton = styled(BaseCountDownButton)`
+  background: ${(props) => props.theme['red-500']};
+
+  &:not(:disabled):hover {
+    background: ${(props) => props.theme['red-700']};
   }
 `
