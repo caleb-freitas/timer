@@ -1,65 +1,22 @@
-import { createContext, ReactNode, useReducer, useState } from 'react'
-import { CreateCycleInput, Cycle, CycleContextProps } from '../@types/cycles'
+import { createContext, useReducer, useState } from 'react'
+
+import {
+  ActionType,
+  CreateCycleInput,
+  Cycle,
+  CycleContextProps,
+  CycleContextProviderProps,
+} from '../@types/cycles'
+import { cyclesReducer } from '../reducers/cycles'
 
 export const CycleContext = createContext({} as CycleContextProps)
 
-type CycleContextProviderProps = {
-  children: ReactNode
-}
-
-type CycleState = {
-  cycles: Cycle[]
-  activeCycleId: string | null
-}
-
 export function CycleContextProvider({ children }: CycleContextProviderProps) {
   const [secondsPassed, setSecondsPassed] = useState(0)
-  const [cycleState, dispatch] = useReducer(
-    (state: CycleState, action: any) => {
-      if (action.type === 'createNewCycle') {
-        return {
-          ...state,
-          cycles: [...state.cycles, action.payload.newCycle],
-          activeCycleId: action.payload.newCycle.id,
-        }
-      }
-      if (action.type === 'interruptCurrentCycle') {
-        return {
-          ...state,
-          cycles: state.cycles.map((cycle) => {
-            if (cycle.id === state.activeCycleId) {
-              return {
-                ...cycle,
-                stopDate: new Date(),
-              }
-            }
-            return cycle
-          }),
-          activeCycleId: null,
-        }
-      }
-      if (action.type === 'markCurrentCycleAsFinished') {
-        return {
-          ...state,
-          cycles: state.cycles.map((cycle) => {
-            if (cycle.id === state.activeCycleId) {
-              return {
-                ...cycle,
-                finishedDate: new Date(),
-              }
-            }
-            return cycle
-          }),
-          activeCycleId: '',
-        }
-      }
-      return state
-    },
-    {
-      cycles: [],
-      activeCycleId: '',
-    },
-  )
+  const [cycleState, dispatch] = useReducer(cyclesReducer, {
+    cycles: [],
+    activeCycleId: '',
+  })
 
   const { cycles, activeCycleId } = cycleState
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
@@ -76,7 +33,7 @@ export function CycleContextProvider({ children }: CycleContextProviderProps) {
       ...cycleInput,
     }
     dispatch({
-      type: 'createNewCycle',
+      type: ActionType.CreateNewCycle,
       payload: {
         newCycle,
       },
@@ -86,7 +43,7 @@ export function CycleContextProvider({ children }: CycleContextProviderProps) {
 
   function interruptCurrentCycle() {
     dispatch({
-      type: 'interruptCurrentCycle',
+      type: ActionType.InterruptCurrentCycle,
       payload: {
         activeCycleId,
       },
@@ -95,7 +52,7 @@ export function CycleContextProvider({ children }: CycleContextProviderProps) {
 
   function markCurrentCycleAsFinished() {
     dispatch({
-      type: 'markCurrentCycleAsFinished',
+      type: ActionType.MarkCurrentCycleAsFinished,
       payload: {
         activeCycleId,
       },

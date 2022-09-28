@@ -1,3 +1,4 @@
+import { ReactNode } from 'react'
 import { z } from 'zod'
 
 export const createCycleInput = z.object({
@@ -23,4 +24,19 @@ export type CycleContextProps = {
   markCurrentCycleAsFinished: () => void
   setAmountOfSecondsElapsed: (seconds: number) => void
   createNewCycle: (cycleInput: CreateCycleInput) => void
+}
+
+export type CycleContextProviderProps = {
+  children: ReactNode
+}
+
+export type CycleState = {
+  cycles: Cycle[]
+  activeCycleId: string | null
+}
+
+export enum ActionType {
+  CreateNewCycle = 'CreateNewCycle',
+  InterruptCurrentCycle = 'InterruptCurrentCycle',
+  MarkCurrentCycleAsFinished = 'MarkCurrentCycleAsFinished',
 }
