@@ -15,9 +15,12 @@ export type Cycle = CreateCycleInput & {
 }
 
 export type CycleContextProps = {
+  cycles: Cycle[]
   activeCycle: Cycle | undefined
   activeCycleId: string | null
   secondsPassed: number
+  interruptCurrentCycle: () => void
   markCurrentCycleAsFinished: () => void
-  setSecondsPassedAmount: (seconds: number) => void
+  setAmountOfSecondsElapsed: (seconds: number) => void
+  createNewCycle: (cycleInput: CreateCycleInput) => void
 }
