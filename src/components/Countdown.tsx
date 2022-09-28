@@ -29,7 +29,7 @@ export function Countdown() {
         // calculate the difference between the current time and the start time
         const secondsDifference = differenceInSeconds(
           new Date(),
-          activeCycle.startDate,
+          new Date(activeCycle.startDate),
         )
         // handle finished countdown
         if (secondsDifference >= seconds) {
