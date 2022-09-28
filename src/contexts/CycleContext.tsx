@@ -7,7 +7,12 @@ import {
   CycleContextProps,
   CycleContextProviderProps,
 } from '../@types/cycles'
-import { cyclesReducer } from '../reducers/cycles'
+import {
+  createNewCycleAction,
+  interruptCurrentCycleAction,
+  markCurrentCycleAsFinishedAction,
+} from '../reducers/cycles/actions'
+import { cyclesReducer } from '../reducers/cycles/reducer'
 
 export const CycleContext = createContext({} as CycleContextProps)
 
@@ -32,31 +37,16 @@ export function CycleContextProvider({ children }: CycleContextProviderProps) {
       startDate: new Date(),
       ...cycleInput,
     }
-    dispatch({
-      type: ActionType.CreateNewCycle,
-      payload: {
-        newCycle,
-      },
-    })
+    dispatch(createNewCycleAction(newCycle))
     setSecondsPassed(0)
   }
 
   function interruptCurrentCycle() {
-    dispatch({
-      type: ActionType.InterruptCurrentCycle,
-      payload: {
-        activeCycleId,
-      },
-    })
+    dispatch(interruptCurrentCycleAction())
   }
 
   function markCurrentCycleAsFinished() {
-    dispatch({
-      type: ActionType.MarkCurrentCycleAsFinished,
-      payload: {
-        activeCycleId,
-      },
-    })
+    dispatch(markCurrentCycleAsFinishedAction())
   }
 
   return (

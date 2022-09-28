@@ -1,4 +1,4 @@
-import { ActionType, CycleState } from '../@types/cycles'
+import { ActionType, CycleState } from '../../@types/cycles'
 
 export const cyclesReducer = (state: CycleState, action: any) => {
   if (action.type === ActionType.CreateNewCycle) {
